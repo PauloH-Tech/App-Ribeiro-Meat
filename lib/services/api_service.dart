@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:ribeiro_meat/config/app_config.dart';
 import 'package:ribeiro_meat/utils/erro_resposta.dart';
-
 
 class ApiException implements Exception {
   final int statusCode;
@@ -15,84 +16,84 @@ class ApiException implements Exception {
 }
 
 class ApiService {
-  //url localhost
-  // static final String _baseUrl = 'http://127.0.0.1:8082';
+  static const _timeout = Duration(seconds: 15);
 
-  //url localhost devices
-  // static final String _baseUrl = 'http://192.168.1.6:8082';
+  /// Token JWT do administrador (definido pelo AdminAuth após o login).
+  static String? token;
 
-  //url produção
-  // static final String _baseUrl = 'http://54.207.44.155:8080';
+  /// Chamado quando a API responde 401 (token expirado/inválido).
+  static void Function()? onNaoAutorizado;
 
+  static Map<String, String> _headers({bool json = false}) => {
+    if (json) 'Content-Type': 'application/json; charset=utf-8',
+    if (token != null) 'Authorization': 'Bearer $token',
+  };
 
-  static Future<dynamic> get(String path) async {
+  static Uri _uri(String path) => Uri.parse('${AppConfig.apiUrl}$path');
+
+  static Future<dynamic> get(String path) =>
+      _executar(() => http.get(_uri(path), headers: _headers()));
+
+  static Future<dynamic> post(String path, Object? body) => _executar(
+    () => http.post(
+      _uri(path),
+      headers: _headers(json: true),
+      body: jsonEncode(body),
+    ),
+  );
+
+  static Future<dynamic> put(String path, Object? body) => _executar(
+    () => http.put(
+      _uri(path),
+      headers: _headers(json: true),
+      body: jsonEncode(body),
+    ),
+  );
+
+  static Future<dynamic> patch(String path, Object? body) => _executar(
+    () => http.patch(
+      _uri(path),
+      headers: _headers(json: true),
+      body: jsonEncode(body),
+    ),
+  );
+
+  static Future<dynamic> delete(String path) =>
+      _executar(() => http.delete(_uri(path), headers: _headers()));
+
+  static Future<dynamic> _executar(Future<http.Response> Function() req) async {
     final http.Response res;
-    res = await http
-        .get(Uri.parse('${AppConfig.apiUrl}$path'))
-        .timeout(const Duration(seconds: 12));
+    try {
+      res = await req().timeout(_timeout);
+    } on TimeoutException {
+      throw ApiException(0, 'O servidor demorou para responder. Tente novamente.');
+    } catch (_) {
+      throw ApiException(0, 'Sem conexão com o servidor.');
+    }
     return _handle(res);
   }
 
-  // static Future<dynamic> post(String path, Map<String, dynamic> body) async {
-  //   final http.Response res;
-  //   // print(body);
-  //   res = await http
-  //       .post(
-  //         Uri.parse('${AppConfig.apiUrl}$path'),
-  //         headers: _headers(),
-  //         body: jsonEncode(body),
-  //       )
-  //       .timeout(const Duration(seconds: 12));
-
-  //   return _handle(res);
-  // }
-
-  // static Future<dynamic> put(String path, Map<String, dynamic> body) async {
-  //   final http.Response res;
-  //   res = await http
-  //       .put(
-  //         Uri.parse('${AppConfig.apiUrl}$path'),
-  //         headers: _headers(),
-  //         body: jsonEncode(body),
-  //       )
-  //       .timeout(const Duration(seconds: 12));
-
-  //   return _handle(res);
-  // }
-
-  // static Future<dynamic> delete(String path) async {
-  //   final http.Response res;
-  //   res = await http
-  //       .delete(Uri.parse('${AppConfig.apiUrl}$path'), headers: _headers())
-  //       .timeout(const Duration(seconds: 12));
-  //   return _handle(res);
-  // }
-
-  // static Future<dynamic> patch(String path, Map<String, dynamic>? body) async {
-  //   final http.Response res;
-  //   res = await http
-  //       .patch(
-  //         Uri.parse('${AppConfig.apiUrl}$path'),
-  //         headers: _headers(),
-  //         body: jsonEncode(body),
-  //       )
-  //       .timeout(const Duration(seconds: 12));
-  //   return _handle(res);
-  // }
-
   static dynamic _handle(http.Response res) {
-    // dev.log('${res.statusCode}');
-    // dev.log(res.body);
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (res.body.isEmpty) return null;
       return jsonDecode(utf8.decode(res.bodyBytes));
     }
-    ErroResposta erro;
-    try {
-      erro = ErroResposta.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
-    } catch (_) {
-      throw ApiException(res.statusCode, 'Erro desconhecido');
+    if (res.statusCode == 401 && token != null) {
+      onNaoAutorizado?.call();
     }
-    throw ApiException(erro.status, erro.message);
+    String? mensagem;
+    try {
+      final erro = ErroResposta.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
+      mensagem = erro.message;
+    } catch (_) {}
+    if (mensagem == null || mensagem.isEmpty) {
+      mensagem = switch (res.statusCode) {
+        401 => 'Sessão expirada. Entre novamente.',
+        403 => 'Acesso negado.',
+        404 => 'Registro não encontrado.',
+        _ => 'Erro inesperado (${res.statusCode}).',
+      };
+    }
+    throw ApiException(res.statusCode, mensagem);
   }
 }
