@@ -75,7 +75,10 @@ class _HomePageState extends State<HomePage> {
 
   Widget _conteudo(CatalogoController catalogo) {
     final largura = MediaQuery.sizeOf(context).width;
-    final lateral = ((largura - larguraMaxima) / 2).clamp(16.0, double.infinity);
+    final lateral = ((largura - larguraMaxima) / 2).clamp(
+      16.0,
+      double.infinity,
+    );
     final visiveis = _filtrar(catalogo.categorias);
 
     return RefreshIndicator(
@@ -85,7 +88,9 @@ class _HomePageState extends State<HomePage> {
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: lateral),
             sliver: SliverToBoxAdapter(
-              child: _Cabecalho(nomeLoja: catalogo.configuracao?.nomeLoja ?? ''),
+              child: _Cabecalho(
+                nomeLoja: catalogo.configuracao?.nomeLoja ?? '',
+              ),
             ),
           ),
           SliverPersistentHeader(
@@ -121,16 +126,14 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Text(
                       categoria.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '${categoria.products.length}',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Cores.textoSuave,
-                      ),
+                      style: Theme.of(context).textTheme.titleSmall
+                          ?.copyWith(color: Cores.textoSuave),
                     ),
                   ],
                 ),
@@ -174,21 +177,13 @@ class _Cabecalho extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Cores.vinho, Cores.vinhoEscuro],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.kebab_dining_rounded,
-                  color: Colors.white,
-                  size: 26,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/icon/icon_logo.png',
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(width: 12),
@@ -214,9 +209,9 @@ class _Cabecalho extends StatelessWidget {
               ),
               IconButton.filledTonal(
                 tooltip: 'Meu pedido',
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CarrinhoPage()),
-                ),
+                onPressed: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const CarrinhoPage())),
                 icon: Badge(
                   isLabelVisible: itens > 0,
                   label: Text('$itens'),
