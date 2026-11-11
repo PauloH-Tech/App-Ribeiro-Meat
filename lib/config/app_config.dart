@@ -3,6 +3,6 @@ class AppConfig {
   /// flutter build web --dart-define=API_URL=https://api.minhaloja.com.br
   static const String apiUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://localhost:8081',
+    defaultValue: 'https://api.techpaulo.com.br',
   );
 }
