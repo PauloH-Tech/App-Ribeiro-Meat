@@ -1,3 +1,4 @@
+import 'package:ribeiro_meat/models/produto.dart';
 import 'package:ribeiro_meat/models/unidade_medida.dart';
 
 class Formatador {
@@ -20,4 +21,9 @@ class Formatador {
     }
     return '${numero(q)} ${q == 1 ? unidade.singular : unidade.plural}';
   }
+
+  static String? pesoAproximado(Produto p) =>
+      p.unitMeasurement == UnitMeasurement.peca && p.approxWeight != null
+      ? 'Aprox. ${numero(p.approxWeight!)} kg'
+      : null;
 }

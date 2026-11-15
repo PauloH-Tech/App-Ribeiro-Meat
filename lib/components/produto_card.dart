@@ -23,7 +23,9 @@ class ProdutoCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: noCarrinho > 0 ? Cores.vinho.withValues(alpha: 0.5) : Cores.borda,
+          color: noCarrinho > 0
+              ? Cores.vinho.withValues(alpha: 0.5)
+              : Cores.borda,
           width: noCarrinho > 0 ? 1.5 : 1,
         ),
       ),
@@ -126,7 +128,11 @@ class _Selo extends StatelessWidget {
         color: Cores.vinho,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Row(

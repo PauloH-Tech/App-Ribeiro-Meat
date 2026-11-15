@@ -12,6 +12,7 @@ class Produto {
   final double minQuantity;
   final double increment;
   final List<OpcaoPreparo> preparationOptions;
+  final double? approxWeight;
 
   const Produto({
     required this.id,
@@ -22,6 +23,7 @@ class Produto {
     required this.minQuantity,
     required this.increment,
     required this.preparationOptions,
+    this.approxWeight,
   });
 
   bool get temImagem => imageUrl != null && imageUrl!.trim().isNotEmpty;
@@ -30,6 +32,7 @@ class Produto {
     final unidade = UnitMeasurement.parse(j['unitMeasurement'] as String?);
     final min = (j['minQuantity'] as num?)?.toDouble() ?? 0;
     final inc = (j['increment'] as num?)?.toDouble() ?? 0;
+    final approx = (j['approxWeightKg'] as num?)?.toDouble();
     final padrao = unidade == UnitMeasurement.kg ? 0.5 : 1.0;
     return Produto(
       id: j['id'],
@@ -42,6 +45,7 @@ class Produto {
       preparationOptions: ((j['preparationOptions'] as List?) ?? [])
           .map((item) => OpcaoPreparo.fromJson(item))
           .toList(),
+      approxWeight: approx
     );
   }
 
@@ -54,5 +58,6 @@ class Produto {
     'minQuantity': minQuantity,
     'increment': increment,
     'preparationOptions': preparationOptions.map((o) => o.toJson()).toList(),
+    'approxWeightKg': approxWeight,
   };
 }

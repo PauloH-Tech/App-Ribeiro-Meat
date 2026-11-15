@@ -32,6 +32,7 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
   late final TextEditingController _imagem;
   late final TextEditingController _minimo;
   late final TextEditingController _incremento;
+  late final TextEditingController _pesoAproximado;
 
   late int? _categoriaId;
   late UnitMeasurement _unidade;
@@ -56,6 +57,9 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
     _incremento = TextEditingController(
       text: Formatador.numero(p?.increment ?? _padrao(_unidade).$2),
     );
+    _pesoAproximado = TextEditingController(
+      text: p?.approxWeight == null ? '' : Formatador.numero(p!.approxWeight!),
+    );
     _categoriaId =
         p?.categoryId ??
         (widget.categorias.length == 1 ? widget.categorias.first.id : null);
@@ -69,7 +73,14 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
 
   @override
   void dispose() {
-    for (final c in [_nome, _descricao, _imagem, _minimo, _incremento]) {
+    for (final c in [
+      _nome,
+      _descricao,
+      _imagem,
+      _minimo,
+      _incremento,
+      _pesoAproximado,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -146,6 +157,9 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
       increment: _lerNumero(_incremento.text)!,
       available: _disponivel,
       preparationOptionIds: _preparosSelecionados,
+      approxWeight: _unidade == UnitMeasurement.peca
+          ? _lerNumero(_pesoAproximado.text)
+          : null,
     );
     final ok = await executarAcao(
       context,
@@ -270,6 +284,7 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
                       ),
                   ],
                 ),
+
                 const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,6 +305,7 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
                         validator: _validarNumero,
                       ),
                     ),
+
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextFormField(
@@ -314,6 +330,24 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
                   Text(
                     exemplo,
                     style: tema.bodySmall?.copyWith(color: Cores.textoSuave),
+                  ),
+                ],
+                if (_unidade == UnitMeasurement.peca) ...[
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _pesoAproximado,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'Peso aproximado da peça',
+                      suffixText: 'Kg',
+                    ),
+
+                    validator: _validarNumero,
                   ),
                 ],
               ],
@@ -372,7 +406,9 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
                     final t = (v ?? '').trim();
                     if (t.isEmpty) return null;
                     final uri = Uri.tryParse(t);
-                    return uri == null || !uri.hasScheme || !uri.host.contains('.')
+                    return uri == null ||
+                            !uri.hasScheme ||
+                            !uri.host.contains('.')
                         ? 'Link inválido'
                         : null;
                   },
@@ -429,7 +465,9 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
                         ),
                       )
                     : const Icon(Icons.check_rounded),
-                label: Text(_editando ? 'Salvar alterações' : 'Cadastrar produto'),
+                label: Text(
+                  _editando ? 'Salvar alterações' : 'Cadastrar produto',
+                ),
               ),
             ),
           ),

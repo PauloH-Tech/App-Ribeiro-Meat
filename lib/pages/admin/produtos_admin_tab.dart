@@ -3,6 +3,7 @@ import 'package:ribeiro_meat/components/estado_mensagem.dart';
 import 'package:ribeiro_meat/config/tema.dart';
 import 'package:ribeiro_meat/models/admin.dart';
 import 'package:ribeiro_meat/models/opcao_preparo.dart';
+import 'package:ribeiro_meat/models/produto.dart';
 import 'package:ribeiro_meat/pages/admin/admin_utils.dart';
 import 'package:ribeiro_meat/pages/admin/produto_form_page.dart';
 import 'package:ribeiro_meat/services/admin_service.dart';
@@ -133,9 +134,8 @@ class _ProdutosAdminTabState extends State<ProdutosAdminTab> {
             Text(
               '${_produtos.length} produtos'
               '${ocultos > 0 ? ' · $ocultos ocultos do catálogo' : ''}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Cores.textoSuave),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: Cores.textoSuave),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -220,6 +220,14 @@ class _ProdutoTile extends StatelessWidget {
     final tema = Theme.of(context).textTheme;
     final p = produto;
     final min = Formatador.quantidade(p.minQuantity, p.unitMeasurement);
+    final peso = p.approxWeight;
+    final desc = [
+      p.categoryName,
+      p.unitMeasurement.rotulo,
+      'mín. $min',
+      if (p.unitMeasurement == UnitMeasurement.peca && peso != null)
+        '~${Formatador.quantidade(peso, UnitMeasurement.kg)}',
+    ].join(' · ');
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -260,7 +268,7 @@ class _ProdutoTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${p.categoryName} · ${p.unitMeasurement.rotulo} · mín. $min',
+                        desc,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: tema.bodySmall?.copyWith(
@@ -296,15 +304,10 @@ class _ProdutoTile extends StatelessWidget {
                               ),
                             ),
                           )
-                        : Switch(
-                            value: p.available,
-                            onChanged: onDisponivel,
-                          ),
+                        : Switch(value: p.available, onChanged: onDisponivel),
                     Text(
                       p.available ? 'Visível' : 'Oculto',
-                      style: tema.labelSmall?.copyWith(
-                        color: Cores.textoSuave,
-                      ),
+                      style: tema.labelSmall?.copyWith(color: Cores.textoSuave),
                     ),
                   ],
                 ),

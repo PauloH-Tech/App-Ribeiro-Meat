@@ -15,7 +15,11 @@ class AdicionarProdutoSheet extends StatefulWidget {
   final Produto produto;
   final ItemCarrinho? editando;
 
-  const AdicionarProdutoSheet({super.key, required this.produto, this.editando});
+  const AdicionarProdutoSheet({
+    super.key,
+    required this.produto,
+    this.editando,
+  });
 
   static Future<void> abrir(
     BuildContext context,
@@ -30,7 +34,8 @@ class AdicionarProdutoSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (_) => AdicionarProdutoSheet(produto: produto, editando: editando),
+      builder: (_) =>
+          AdicionarProdutoSheet(produto: produto, editando: editando),
     );
   }
 
@@ -51,9 +56,7 @@ class _AdicionarProdutoSheetState extends State<AdicionarProdutoSheet> {
     super.initState();
     final e = widget.editando;
     _quantidade = e?.quantidade ?? p.minQuantity;
-    _preparo =
-        e?.preparo ??
-        (p.preparationOptions.length == 1 ? p.preparationOptions.first : null);
+    _preparo = e?.preparo;
     _obs = TextEditingController(text: e?.observacao ?? '');
   }
 
@@ -169,9 +172,12 @@ class _AdicionarProdutoSheetState extends State<AdicionarProdutoSheet> {
                   const SizedBox(height: 24),
                   _Titulo(
                     'Quantidade',
-                    detalhe: p.unitMeasurement == UnitMeasurement.kg
-                        ? 'Mínimo ${Formatador.quantidade(p.minQuantity, p.unitMeasurement)}'
-                        : p.unitMeasurement.rotulo,
+                    detalhe: switch (p.unitMeasurement) {
+                      UnitMeasurement.kg =>
+                        'Mínimo ${Formatador.quantidade(p.minQuantity, p.unitMeasurement)}',
+                      UnitMeasurement.peca => Formatador.pesoAproximado(p),
+                      _ => p.unitMeasurement.rotulo,
+                    },
                   ),
                   const SizedBox(height: 10),
                   Center(
@@ -195,10 +201,8 @@ class _AdicionarProdutoSheetState extends State<AdicionarProdutoSheet> {
                             label: Text(
                               Formatador.quantidade(s, p.unitMeasurement),
                             ),
-                            selected:
-                                (Formatador.arredondar(s) == _quantidade),
-                            onSelected: (_) =>
-                                setState(() => _quantidade = s),
+                            selected: (Formatador.arredondar(s) == _quantidade),
+                            onSelected: (_) => setState(() => _quantidade = s),
                           ),
                       ],
                     ),
@@ -247,7 +251,9 @@ class _AdicionarProdutoSheetState extends State<AdicionarProdutoSheet> {
             child: FilledButton.icon(
               onPressed: _confirmar,
               icon: Icon(
-                _editando ? Icons.check_rounded : Icons.add_shopping_cart_rounded,
+                _editando
+                    ? Icons.check_rounded
+                    : Icons.add_shopping_cart_rounded,
               ),
               label: Text(
                 _editando ? 'Salvar alterações' : 'Adicionar · $qtdTexto',
