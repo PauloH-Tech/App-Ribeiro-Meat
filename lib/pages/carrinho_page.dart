@@ -112,7 +112,8 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
       );
       return;
     }
-    final loja = context.read<CatalogoController>().configuracao;
+    final catalogo = context.read<CatalogoController>();
+    final loja = catalogo.configuracao;
     final carrinho = context.read<Carrinho>();
     if (loja == null || loja.numeroWhatsapp.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,6 +126,7 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
       loja: loja,
       itens: carrinho.itens,
       cliente: _cliente,
+      categorias: catalogo.categorias,
     );
 
     // Abre o WhatsApp imediatamente (sem await antes) para que o navegador
@@ -273,12 +275,14 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                   ),
                   const SizedBox(height: 12),
                   _PreviaMensagem(montar: () {
-                    final loja = context.read<CatalogoController>().configuracao;
+                    final catalogo = context.read<CatalogoController>();
+                    final loja = catalogo.configuracao;
                     if (loja == null) return '';
                     return PedidoWhatsapp.montarMensagem(
                       loja: loja,
                       itens: carrinho.itens,
                       cliente: _cliente,
+                      categorias: catalogo.categorias,
                     );
                   }),
                   const SizedBox(height: 24),

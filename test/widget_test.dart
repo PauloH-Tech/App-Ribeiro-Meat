@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ribeiro_meat/models/categoria.dart';
 import 'package:ribeiro_meat/models/configuracao_loja.dart';
 import 'package:ribeiro_meat/models/item_carrinho.dart';
 import 'package:ribeiro_meat/models/opcao_preparo.dart';
@@ -42,8 +43,7 @@ void main() {
       ],
       cliente: const DadosCliente(nome: 'Maria', observacao: 'Para sábado'),
     );
-    expect(msg, contains('*Patinho* - 1,5 kg'));
-    expect(msg, contains('Preparo: Bife'));
+    expect(msg, contains('*Patinho* - 1,5 kg - Bife'));
     expect(msg, contains('Para sábado'));
     // Sem emojis/símbolos fora do Latin-1 (viram "?" em alguns WhatsApp).
     expect(msg.runes.every((r) => r <= 0xFF), isTrue);
@@ -51,5 +51,58 @@ void main() {
     final link = PedidoWhatsapp.montarLink(loja.numeroWhatsapp, msg).toString();
     expect(link, startsWith('https://wa.me/5544999999999?text='));
     expect(link, isNot(contains('+')));
+  });
+
+  test('agrupa itens por categoria e ordena por produto e preparo', () {
+    const loja = ConfiguracaoLoja(
+      nomeLoja: 'Casa de Carnes',
+      nomeWhatsapp: 'Vendedor',
+      numeroWhatsapp: '5544999999999',
+    );
+    Produto prod(int id, String nome) => Produto(
+      id: id,
+      name: nome,
+      unitMeasurement: UnitMeasurement.kg,
+      minQuantity: 0.5,
+      increment: 0.25,
+      preparationOptions: const [],
+    );
+    final acem = prod(10, 'Acém');
+    final bisteca = prod(20, 'Bisteca');
+    final linguica = prod(21, 'Linguiça');
+    final avulso = prod(99, 'Carvão');
+    const moida = OpcaoPreparo(id: 1, name: 'Moída');
+    const bife = OpcaoPreparo(id: 2, name: 'Bife');
+
+    final msg = PedidoWhatsapp.montarMensagem(
+      loja: loja,
+      cliente: const DadosCliente(nome: 'Maria'),
+      categorias: [
+        Categoria(id: 1, name: 'Bovinos', products: [patinho, acem]),
+        Categoria(id: 2, name: 'Suínos', products: [bisteca, linguica]),
+      ],
+      itens: [
+        ItemCarrinho(produto: linguica, quantidade: 1),
+        ItemCarrinho(produto: patinho, quantidade: 1, preparo: moida),
+        ItemCarrinho(produto: avulso, quantidade: 1),
+        ItemCarrinho(produto: acem, quantidade: 1),
+        ItemCarrinho(produto: bisteca, quantidade: 1),
+        ItemCarrinho(produto: patinho, quantidade: 1, preparo: bife),
+      ],
+    );
+
+    final ordem = [
+      '*BOVINOS*',
+      '1. *Acém*',
+      '2. *Patinho* - 1 kg - Bife',
+      '3. *Patinho* - 1 kg - Moída',
+      '*SUÍNOS*',
+      '4. *Bisteca*',
+      '5. *Linguiça*',
+      '*OUTROS*',
+      '6. *Carvão*',
+    ].map(msg.indexOf).toList();
+    expect(ordem.every((i) => i >= 0), isTrue, reason: msg);
+    expect(ordem, orderedEquals([...ordem]..sort()), reason: msg);
   });
 }
