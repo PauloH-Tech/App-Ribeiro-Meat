@@ -85,11 +85,19 @@ class ProdutoCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          produto.unitMeasurement.rotulo,
-                          style: tema.labelMedium?.copyWith(
-                            color: Cores.vinho,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          Formatador.preco(produto) ??
+                              produto.unitMeasurement.rotulo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: (produto.price == null
+                                  ? tema.labelMedium
+                                  : tema.titleSmall)
+                              ?.copyWith(
+                                color: Cores.vinho,
+                                fontWeight: produto.price == null
+                                    ? FontWeight.w600
+                                    : FontWeight.w800,
+                              ),
                         ),
                       ),
                       Material(

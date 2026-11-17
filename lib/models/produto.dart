@@ -13,6 +13,12 @@ class Produto {
   final double increment;
   final List<OpcaoPreparo> preparationOptions;
   final double? approxWeight;
+  /// Preço por unidade de venda (por kg, por peça, por pacote...), exceto
+  /// quando [pricePerKg] é true: aí é o preço do kg. Apenas informativo.
+  final double? price;
+
+  /// Vendido por peça, mas cobrado por kg (a peça é pesada na venda).
+  final bool pricePerKg;
 
   const Produto({
     required this.id,
@@ -24,6 +30,8 @@ class Produto {
     required this.increment,
     required this.preparationOptions,
     this.approxWeight,
+    this.price,
+    this.pricePerKg = false,
   });
 
   bool get temImagem => imageUrl != null && imageUrl!.trim().isNotEmpty;
@@ -45,7 +53,10 @@ class Produto {
       preparationOptions: ((j['preparationOptions'] as List?) ?? [])
           .map((item) => OpcaoPreparo.fromJson(item))
           .toList(),
-      approxWeight: approx
+      approxWeight: approx,
+      // null = sem preço cadastrado ("sob consulta"); nunca tratar como 0.
+      price: (j['price'] as num?)?.toDouble(),
+      pricePerKg: j['pricePerKg'] == true,
     );
   }
 
@@ -59,5 +70,7 @@ class Produto {
     'increment': increment,
     'preparationOptions': preparationOptions.map((o) => o.toJson()).toList(),
     'approxWeightKg': approxWeight,
+    'price': price,
+    'pricePerKg': pricePerKg,
   };
 }

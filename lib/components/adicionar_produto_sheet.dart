@@ -162,6 +162,19 @@ class _AdicionarProdutoSheetState extends State<AdicionarProdutoSheet> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    Formatador.preco(p) ?? 'Preço sob consulta',
+                    style: tema.titleMedium?.copyWith(
+                      color: Cores.vinho,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (p.pricePerKg && p.price != null)
+                    Text(
+                      'Valor final conforme o peso da peça na balança',
+                      style: tema.bodySmall?.copyWith(color: Cores.textoSuave),
+                    ),
                   if ((p.description ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(

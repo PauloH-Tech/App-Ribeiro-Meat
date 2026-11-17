@@ -20,7 +20,18 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => Carrinho()..carregar()),
-        ChangeNotifierProvider(create: (_) => CatalogoController()..carregar()),
+        ChangeNotifierProvider(
+          create: (ctx) {
+            final catalogo = CatalogoController();
+            // Mantém preços/dados dos itens do carrinho iguais ao catálogo.
+            catalogo.addListener(() {
+              if (catalogo.status == StatusCatalogo.pronto) {
+                ctx.read<Carrinho>().sincronizar(catalogo.categorias);
+              }
+            });
+            return catalogo..carregar();
+          },
+        ),
         ChangeNotifierProvider(create: (_) => AdminAuth()..carregar()),
       ],
       child: MaterialApp(

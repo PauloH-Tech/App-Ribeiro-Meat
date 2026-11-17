@@ -34,6 +34,8 @@ class ProdutoAdmin {
   final String categoryName;
   final List<OpcaoPreparo> preparationOptions;
   final double? approxWeight;
+  final double? price;
+  final bool pricePerKg;
 
   const ProdutoAdmin({
     required this.id,
@@ -48,6 +50,8 @@ class ProdutoAdmin {
     required this.categoryName,
     required this.preparationOptions,
     this.approxWeight,
+    this.price,
+    this.pricePerKg = false,
   });
 
   factory ProdutoAdmin.fromJson(Map<String, dynamic> j) => ProdutoAdmin(
@@ -65,6 +69,8 @@ class ProdutoAdmin {
         .map((o) => OpcaoPreparo.fromJson(o))
         .toList(),
     approxWeight: (j['approxWeightKg'] as num?)?.toDouble(),
+    price: (j['price'] as num?)?.toDouble(),
+    pricePerKg: j['pricePerKg'] == true,
   );
 }
 
@@ -80,6 +86,8 @@ class ProdutoForm {
   final bool available;
   final Set<int> preparationOptionIds;
   final double? approxWeight;
+  final double? price;
+  final bool pricePerKg;
 
   const ProdutoForm({
     required this.categoryId,
@@ -92,6 +100,8 @@ class ProdutoForm {
     required this.available,
     required this.preparationOptionIds,
     this.approxWeight,
+    this.price,
+    this.pricePerKg = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -105,5 +115,7 @@ class ProdutoForm {
     'available': available,
     'preparationOptionIds': preparationOptionIds.toList(),
     'approxWeightKg': approxWeight,
+    'price': price,
+    'pricePerKg': pricePerKg,
   };
 }

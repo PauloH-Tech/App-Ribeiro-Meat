@@ -18,8 +18,8 @@ class ItemCarrinho {
   String get chave =>
       '${produto.id}|${preparo?.id ?? 0}|${observacao.trim().toLowerCase()}';
 
-  ItemCarrinho copyWith({double? quantidade}) => ItemCarrinho(
-    produto: produto,
+  ItemCarrinho copyWith({double? quantidade, Produto? produto}) => ItemCarrinho(
+    produto: produto ?? this.produto,
     quantidade: quantidade ?? this.quantidade,
     preparo: preparo,
     observacao: observacao,

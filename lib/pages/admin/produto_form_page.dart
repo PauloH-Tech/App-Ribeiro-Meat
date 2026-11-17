@@ -33,10 +33,12 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
   late final TextEditingController _minimo;
   late final TextEditingController _incremento;
   late final TextEditingController _pesoAproximado;
+  late final TextEditingController _preco;
 
   late int? _categoriaId;
   late UnitMeasurement _unidade;
   late bool _disponivel;
+  late bool _precoPorKg;
   late Set<int> _preparosSelecionados;
   late List<OpcaoPreparo> _preparos;
   bool _salvando = false;
@@ -60,10 +62,16 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
     _pesoAproximado = TextEditingController(
       text: p?.approxWeight == null ? '' : Formatador.numero(p!.approxWeight!),
     );
+    _preco = TextEditingController(
+      text: p?.price == null
+          ? ''
+          : p!.price!.toStringAsFixed(2).replaceAll('.', ','),
+    );
     _categoriaId =
         p?.categoryId ??
         (widget.categorias.length == 1 ? widget.categorias.first.id : null);
     _disponivel = p?.available ?? true;
+    _precoPorKg = p?.pricePerKg ?? false;
     _preparosSelecionados = {...?p?.preparationOptions.map((o) => o.id)};
     _preparos = [...widget.preparos];
     for (final c in [_minimo, _incremento, _imagem]) {
@@ -80,6 +88,7 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
       _minimo,
       _incremento,
       _pesoAproximado,
+      _preco,
     ]) {
       c.dispose();
     }
@@ -107,6 +116,19 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
     if (n == null) return 'Número inválido';
     if (n <= 0) return 'Deve ser maior que zero';
     if (n > 9999) return 'Valor muito alto';
+    return null;
+  }
+
+  /// Opcional: vazio = sem preço ("sob consulta" para o cliente).
+  String? _validarPreco(String? v) {
+    if ((v ?? '').trim().isEmpty) return null;
+    final n = _lerNumero(v!);
+    if (n == null) return 'Número inválido';
+    if (n <= 0) return 'Deve ser maior que zero';
+    if (n >= 100000000) return 'Valor muito alto';
+    if ((n * 100 - (n * 100).round()).abs() > 0.0001) {
+      return 'Use no máximo 2 casas decimais';
+    }
     return null;
   }
 
@@ -160,6 +182,8 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
       approxWeight: _unidade == UnitMeasurement.peca
           ? _lerNumero(_pesoAproximado.text)
           : null,
+      price: _lerNumero(_preco.text),
+      pricePerKg: _unidade == UnitMeasurement.peca && _precoPorKg,
     );
     final ok = await executarAcao(
       context,
@@ -285,6 +309,35 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
                   ],
                 ),
 
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _preco,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'Preço',
+                    prefixText: 'R\$ ',
+                    suffixText: _unidade == UnitMeasurement.peca && _precoPorKg
+                        ? 'por kg'
+                        : 'por ${_unidade.singular}',
+                    helperText: 'Deixe vazio para mostrar "sob consulta"',
+                  ),
+                  validator: _validarPreco,
+                ),
+                if (_unidade == UnitMeasurement.peca)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Preço por kg'),
+                    subtitle: const Text(
+                      'A peça é pesada na hora da venda e cobrada pelo kg',
+                    ),
+                    value: _precoPorKg,
+                    onChanged: (v) => setState(() => _precoPorKg = v),
+                  ),
                 const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

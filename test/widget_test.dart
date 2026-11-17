@@ -53,6 +53,74 @@ void main() {
     expect(link, isNot(contains('+')));
   });
 
+  test('formata preços (por unidade e por kg)', () {
+    expect(Formatador.moeda(0), 'R\$ 0,00');
+    expect(Formatador.moeda(45), 'R\$ 45,00');
+    expect(Formatador.moeda(1234.5), 'R\$ 1.234,50');
+    expect(Formatador.moeda(1234567.891), 'R\$ 1.234.567,89');
+
+    const alcatra = Produto(
+      id: 5,
+      name: 'Alcatra',
+      unitMeasurement: UnitMeasurement.kg,
+      minQuantity: 0.5,
+      increment: 0.25,
+      preparationOptions: [],
+      price: 49.9,
+    );
+    const costela = Produto(
+      id: 6,
+      name: 'Costela',
+      unitMeasurement: UnitMeasurement.peca,
+      minQuantity: 1,
+      increment: 1,
+      preparationOptions: [],
+      price: 30,
+    );
+    const picanha = Produto(
+      id: 7,
+      name: 'Picanha',
+      unitMeasurement: UnitMeasurement.peca,
+      minQuantity: 1,
+      increment: 1,
+      preparationOptions: [],
+      approxWeight: 1,
+      price: 79.9,
+      pricePerKg: true,
+    );
+    expect(Formatador.preco(alcatra), 'R\$ 49,90/kg');
+    expect(Formatador.preco(costela), 'R\$ 30,00/peça');
+    expect(Formatador.preco(picanha), 'R\$ 79,90/kg');
+    expect(Formatador.preco(patinho), isNull);
+
+    // Preço é só informativo: não entra na mensagem do pedido.
+    const loja = ConfiguracaoLoja(
+      nomeLoja: 'Casa de Carnes',
+      nomeWhatsapp: 'Vendedor',
+      numeroWhatsapp: '5544999999999',
+    );
+    final msg = PedidoWhatsapp.montarMensagem(
+      loja: loja,
+      itens: const [ItemCarrinho(produto: picanha, quantidade: 2)],
+      cliente: const DadosCliente(nome: 'Maria'),
+    );
+    expect(msg, contains('*Picanha* - 2 peças'));
+    expect(msg, isNot(contains('R\$')));
+  });
+
+  test('pricePerKg vem do JSON e é falso por padrão', () {
+    final base = {
+      'id': 1,
+      'name': 'Picanha',
+      'unitMeasurement': 'PECA',
+      'minQuantity': 1,
+      'increment': 1,
+      'price': 79.9,
+    };
+    expect(Produto.fromJson(base).pricePerKg, isFalse);
+    expect(Produto.fromJson({...base, 'pricePerKg': true}).pricePerKg, isTrue);
+  });
+
   test('agrupa itens por categoria e ordena por produto e preparo', () {
     const loja = ConfiguracaoLoja(
       nomeLoja: 'Casa de Carnes',
