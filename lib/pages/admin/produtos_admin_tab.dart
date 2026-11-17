@@ -223,7 +223,10 @@ class _ProdutoTile extends StatelessWidget {
     final peso = p.approxWeight;
     final desc = [
       p.categoryName,
-      p.unitMeasurement.rotulo,
+      p.price == null
+          ? 'sem preço'
+          : '${Formatador.moeda(p.price!)}/'
+                '${p.pricePerKg ? 'kg' : p.unitMeasurement.singular}',
       'mín. $min',
       if (p.unitMeasurement == UnitMeasurement.peca && peso != null)
         '~${Formatador.quantidade(peso, UnitMeasurement.kg)}',

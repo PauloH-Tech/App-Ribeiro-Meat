@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:ribeiro_meat/models/categoria.dart';
 import 'package:ribeiro_meat/models/item_carrinho.dart';
 import 'package:ribeiro_meat/models/opcao_preparo.dart';
 import 'package:ribeiro_meat/models/produto.dart';
@@ -25,6 +26,32 @@ class Carrinho extends ChangeNotifier {
 
   bool contem(int produtoId) => _itens.any((i) => i.produto.id == produtoId);
 
+  List<Categoria> _catalogo = const [];
+
+  /// Troca o produto salvo em cada item pela versão atual do catálogo, para
+  /// que preço e demais dados não fiquem desatualizados no carrinho salvo.
+  void sincronizar(List<Categoria> categorias) {
+    _catalogo = categorias;
+    if (_aplicarCatalogo()) _mudou();
+  }
+
+  bool _aplicarCatalogo() {
+    if (_catalogo.isEmpty) return false;
+    final atuais = {
+      for (final c in _catalogo)
+        for (final p in c.products) p.id: p,
+    };
+    var mudou = false;
+    for (var i = 0; i < _itens.length; i++) {
+      final novo = atuais[_itens[i].produto.id];
+      if (novo != null && !identical(novo, _itens[i].produto)) {
+        _itens[i] = _itens[i].copyWith(produto: novo);
+        mudou = true;
+      }
+    }
+    return mudou;
+  }
+
   Future<void> carregar() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -34,7 +61,8 @@ class Carrinho extends ChangeNotifier {
       _itens
         ..clear()
         ..addAll(lista.map((j) => ItemCarrinho.fromJson(j)));
-      notifyListeners();
+      // O catálogo pode ter carregado antes do carrinho salvo.
+      _aplicarCatalogo() ? _mudou() : notifyListeners();
     } catch (e) {
       debugPrint('Falha ao carregar carrinho: $e');
     }

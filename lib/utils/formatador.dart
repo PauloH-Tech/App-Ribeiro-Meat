@@ -1,5 +1,4 @@
 import 'package:ribeiro_meat/models/produto.dart';
-import 'package:ribeiro_meat/models/unidade_medida.dart';
 
 class Formatador {
   /// Arredonda para evitar erros de ponto flutuante (0.1 + 0.2...).
@@ -21,6 +20,24 @@ class Formatador {
     }
     return '${numero(q)} ${q == 1 ? unidade.singular : unidade.plural}';
   }
+
+  /// Ex.: 1234.5 -> "R$ 1.234,50".
+  static String moeda(double v) {
+    final centavos = (v * 100).round();
+    final abs = centavos.abs();
+    final reais = (abs ~/ 100).toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+    final cents = (abs % 100).toString().padLeft(2, '0');
+    return '${centavos < 0 ? '-' : ''}R\$ $reais,$cents';
+  }
+
+  /// Preço informativo. Ex.: "R$ 45,00/kg", "R$ 30,00/peça", ou "/kg" para
+  /// peça cobrada por kg. null quando o produto não tem preço.
+  static String? preco(Produto p) => p.price == null
+      ? null
+      : '${moeda(p.price!)}/${p.pricePerKg ? 'kg' : p.unitMeasurement.singular}';
 
   static String? pesoAproximado(Produto p) =>
       p.unitMeasurement == UnitMeasurement.peca && p.approxWeight != null

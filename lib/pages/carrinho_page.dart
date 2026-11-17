@@ -400,16 +400,29 @@ class _LinhaItem extends StatelessWidget {
                       style: tema.bodySmall?.copyWith(color: Cores.textoSuave),
                     ),
                   const SizedBox(height: 8),
-                  SeletorQuantidade(
-                    compacto: true,
-                    valor: Formatador.quantidade(
-                      item.quantidade,
-                      p.unitMeasurement,
-                    ),
-                    onMenos: item.quantidade - p.increment >= p.minQuantity - 0.0001
-                        ? () => carrinho.decrementar(item)
-                        : null,
-                    onMais: () => carrinho.incrementar(item),
+                  // Wrap: em telas estreitas o valor desce para a linha de baixo.
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SeletorQuantidade(
+                        compacto: true,
+                        valor: Formatador.quantidade(
+                          item.quantidade,
+                          p.unitMeasurement,
+                        ),
+                        onMenos: item.quantidade - p.increment >= p.minQuantity - 0.0001
+                            ? () => carrinho.decrementar(item)
+                            : null,
+                        onMais: () => carrinho.incrementar(item),
+                      ),
+                      // Preço só informativo (sem subtotal por enquanto).
+                      Text(
+                        Formatador.preco(p) ?? 'Preço sob consulta',
+                        style: tema.bodySmall?.copyWith(color: Cores.textoSuave),
+                      ),
+                    ],
                   ),
                 ],
               ),
