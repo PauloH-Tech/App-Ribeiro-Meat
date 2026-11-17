@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ribeiro_meat/utils/arquivo_imagem.dart';
 import 'package:ribeiro_meat/models/categoria.dart';
 import 'package:ribeiro_meat/models/configuracao_loja.dart';
 import 'package:ribeiro_meat/models/item_carrinho.dart';
@@ -106,6 +109,22 @@ void main() {
     );
     expect(msg, contains('*Picanha* - 2 peças'));
     expect(msg, isNot(contains('R\$')));
+  });
+
+  test('reconhece o tipo da foto pelos primeiros bytes', () {
+    Uint8List bytes(List<int> b) => Uint8List.fromList([...b, 0, 0, 0, 0]);
+    expect(ArquivoImagem.tipo(bytes([0xFF, 0xD8, 0xFF, 0xE0])), 'image/jpeg');
+    expect(
+      ArquivoImagem.tipo(bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])),
+      'image/png',
+    );
+    expect(
+      ArquivoImagem.tipo(bytes('RIFF\x00\x00\x00\x00WEBP'.codeUnits)),
+      'image/webp',
+    );
+    expect(ArquivoImagem.tipo(bytes('GIF89a'.codeUnits)), isNull);
+    expect(ArquivoImagem.tipo(Uint8List(0)), isNull);
+    expect(ArquivoImagem.extensao('image/jpeg'), 'jpg');
   });
 
   test('pricePerKg vem do JSON e é falso por padrão', () {

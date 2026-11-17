@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:ribeiro_meat/config/tema.dart';
 import 'package:ribeiro_meat/models/admin.dart';
 import 'package:ribeiro_meat/models/opcao_preparo.dart';
 import 'package:ribeiro_meat/models/unidade_medida.dart';
 import 'package:ribeiro_meat/pages/admin/admin_utils.dart';
 import 'package:ribeiro_meat/services/admin_service.dart';
+import 'package:ribeiro_meat/utils/arquivo_imagem.dart';
 import 'package:ribeiro_meat/utils/formatador.dart';
 
 /// Cadastro/edição de produto. Retorna true (via pop) se algo foi salvo.
@@ -29,7 +31,6 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _nome;
   late final TextEditingController _descricao;
-  late final TextEditingController _imagem;
   late final TextEditingController _minimo;
   late final TextEditingController _incremento;
   late final TextEditingController _pesoAproximado;
@@ -43,6 +44,15 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
   late List<OpcaoPreparo> _preparos;
   bool _salvando = false;
 
+  /// URL da foto salva no produto (null = sem foto).
+  String? _fotoAtual;
+
+  /// Foto escolhida que ainda não foi enviada (vai para o S3 ao salvar).
+  Uint8List? _novaFoto;
+  String? _tipoNovaFoto;
+
+  bool get _temFoto => _novaFoto != null || _fotoAtual != null;
+
   bool get _editando => widget.produto != null;
 
   @override
@@ -51,7 +61,8 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
     final p = widget.produto;
     _nome = TextEditingController(text: p?.name ?? '');
     _descricao = TextEditingController(text: p?.description ?? '');
-    _imagem = TextEditingController(text: p?.imageUrl ?? '');
+    final url = p?.imageUrl?.trim() ?? '';
+    _fotoAtual = url.isEmpty ? null : url;
     _unidade = p?.unitMeasurement ?? UnitMeasurement.kg;
     _minimo = TextEditingController(
       text: Formatador.numero(p?.minQuantity ?? _padrao(_unidade).$1),
@@ -74,7 +85,7 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
     _precoPorKg = p?.pricePerKg ?? false;
     _preparosSelecionados = {...?p?.preparationOptions.map((o) => o.id)};
     _preparos = [...widget.preparos];
-    for (final c in [_minimo, _incremento, _imagem]) {
+    for (final c in [_minimo, _incremento]) {
       c.addListener(() => setState(() {}));
     }
   }
@@ -84,7 +95,6 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
     for (final c in [
       _nome,
       _descricao,
-      _imagem,
       _minimo,
       _incremento,
       _pesoAproximado,
@@ -166,14 +176,106 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
     });
   }
 
+  Future<void> _escolherFoto() async {
+    final XFile? arquivo;
+    try {
+      // Reduz no próprio aparelho: foto de celular fica leve e abaixo de 5 MB.
+      arquivo = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 85,
+      );
+    } catch (_) {
+      if (mounted) {
+        mostrarMensagem(context, 'Não foi possível abrir a foto', erro: true);
+      }
+      return;
+    }
+    if (arquivo == null) return; // cancelou
+    final bytes = await arquivo.readAsBytes();
+    if (!mounted) return;
+    final tipo = ArquivoImagem.tipo(bytes);
+    if (tipo == null) {
+      mostrarMensagem(
+        context,
+        'Formato não suportado. Use JPG, PNG ou WEBP.',
+        erro: true,
+      );
+      return;
+    }
+    if (bytes.length > ArquivoImagem.tamanhoMaximo) {
+      mostrarMensagem(context, 'A foto deve ter no máximo 5 MB.', erro: true);
+      return;
+    }
+    setState(() {
+      _novaFoto = bytes;
+      _tipoNovaFoto = tipo;
+    });
+  }
+
+  Widget _previaFoto() {
+    if (_novaFoto != null) {
+      return Image.memory(_novaFoto!, fit: BoxFit.cover);
+    }
+    if (_fotoAtual != null) {
+      return Image.network(
+        _fotoAtual!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _semFoto('Não foi possível carregar a foto'),
+      );
+    }
+    return _semFoto('Sem foto');
+  }
+
+  Widget _semFoto(String texto) => Container(
+    color: Cores.fundo,
+    alignment: Alignment.center,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.image_outlined, size: 40, color: Cores.textoSuave),
+        const SizedBox(height: 6),
+        Text(texto, style: const TextStyle(color: Cores.textoSuave)),
+      ],
+    ),
+  );
+
+  void _removerFoto() => setState(() {
+    _novaFoto = null;
+    _tipoNovaFoto = null;
+    _fotoAtual = null;
+  });
+
   Future<void> _salvar() async {
     if (!_form.currentState!.validate()) return;
     setState(() => _salvando = true);
+
+    // 1) Envia a foto nova (se houver) e usa a URL devolvida pela API.
+    if (_novaFoto != null) {
+      String? url;
+      final enviou = await executarAcao(context, () async {
+        url = await AdminService.enviarImagem(_novaFoto!, _tipoNovaFoto!);
+      });
+      if (!mounted) return;
+      if (!enviou) {
+        setState(() => _salvando = false);
+        return;
+      }
+      // Se o passo 2 falhar, um novo "Salvar" não reenvia a mesma foto.
+      setState(() {
+        _fotoAtual = url;
+        _novaFoto = null;
+        _tipoNovaFoto = null;
+      });
+    }
+
+    // 2) Salva o produto. A API apaga do S3 a foto antiga, se ela mudou.
     final form = ProdutoForm(
       categoryId: _categoriaId!,
       name: _nome.text,
       description: _descricao.text,
-      imageUrl: _imagem.text,
+      imageUrl: _fotoAtual ?? '',
       unitMeasurement: _unidade,
       minQuantity: _lerNumero(_minimo.text)!,
       increment: _lerNumero(_incremento.text)!,
@@ -443,48 +545,48 @@ class _ProdutoFormPageState extends State<ProdutoFormPage> {
             ),
             _Secao(
               titulo: 'Foto',
-              subtitulo: 'Cole o link (URL) de uma imagem',
+              subtitulo: 'Aparece no catálogo · JPG, PNG ou WEBP, até 5 MB',
               children: [
-                TextFormField(
-                  controller: _imagem,
-                  maxLength: 500,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(
-                    labelText: 'URL da imagem',
-                    hintText: 'https://...',
-                    counterText: '',
-                    prefixIcon: Icon(Icons.link_rounded),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: _previaFoto(),
                   ),
-                  validator: (v) {
-                    final t = (v ?? '').trim();
-                    if (t.isEmpty) return null;
-                    final uri = Uri.tryParse(t);
-                    return uri == null ||
-                            !uri.hasScheme ||
-                            !uri.host.contains('.')
-                        ? 'Link inválido'
-                        : null;
-                  },
                 ),
-                if (_imagem.text.trim().isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Image.network(
-                        _imagem.text.trim(),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Container(
-                          color: Cores.fundo,
-                          alignment: Alignment.center,
-                          child: const Text(
-                            'Não foi possível carregar a imagem',
-                            style: TextStyle(color: Cores.textoSuave),
-                          ),
-                        ),
-                      ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _salvando ? null : _escolherFoto,
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: Text(_temFoto ? 'Trocar foto' : 'Escolher foto'),
                     ),
+                    if (_temFoto)
+                      TextButton.icon(
+                        onPressed: _salvando ? null : _removerFoto,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Cores.vinho,
+                        ),
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        label: const Text('Remover foto'),
+                      ),
+                  ],
+                ),
+                if (_novaFoto != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Nova foto escolhida. Ela será enviada ao salvar.',
+                    style: tema.bodySmall?.copyWith(color: Cores.textoSuave),
+                  ),
+                ] else if (!_temFoto && widget.produto?.imageUrl != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'A foto será removida ao salvar.',
+                    style: tema.bodySmall?.copyWith(color: Cores.textoSuave),
                   ),
                 ],
               ],

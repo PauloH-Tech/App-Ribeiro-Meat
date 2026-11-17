@@ -49,7 +49,8 @@ class _PainelState extends State<_Painel> {
   @override
   void dispose() {
     // Ao sair do painel, o catálogo público reflete as alterações.
-    _catalogo.carregar();
+    // Silencioso: aqui não pode notificar a árvore de forma síncrona.
+    _catalogo.carregar(silencioso: true);
     super.dispose();
   }
 

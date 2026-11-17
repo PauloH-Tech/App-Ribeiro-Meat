@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:ribeiro_meat/config/app_config.dart';
 import 'package:ribeiro_meat/utils/erro_resposta.dart';
 
@@ -61,10 +63,34 @@ class ApiService {
   static Future<dynamic> delete(String path) =>
       _executar(() => http.delete(_uri(path), headers: _headers()));
 
-  static Future<dynamic> _executar(Future<http.Response> Function() req) async {
+  /// Envia um arquivo como multipart/form-data no campo [campo].
+  static Future<dynamic> enviarArquivo(
+    String path, {
+    required String campo,
+    required Uint8List bytes,
+    required String nomeArquivo,
+    required String contentType,
+  }) => _executar(() async {
+    final req = http.MultipartRequest('POST', _uri(path))
+      ..headers.addAll(_headers())
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          campo,
+          bytes,
+          filename: nomeArquivo,
+          contentType: MediaType.parse(contentType),
+        ),
+      );
+    return http.Response.fromStream(await req.send());
+  }, timeout: const Duration(seconds: 60)); // upload em internet móvel
+
+  static Future<dynamic> _executar(
+    Future<http.Response> Function() req, {
+    Duration timeout = _timeout,
+  }) async {
     final http.Response res;
     try {
-      res = await req().timeout(_timeout);
+      res = await req().timeout(timeout);
     } on TimeoutException {
       throw ApiException(0, 'O servidor demorou para responder. Tente novamente.');
     } catch (_) {

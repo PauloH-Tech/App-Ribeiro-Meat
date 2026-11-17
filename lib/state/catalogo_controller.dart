@@ -11,10 +11,16 @@ class CatalogoController extends ChangeNotifier {
   ConfiguracaoLoja? configuracao;
   String? erro;
 
-  Future<void> carregar() async {
-    status = StatusCatalogo.carregando;
-    erro = null;
-    notifyListeners();
+  /// [silencioso]: atualiza em segundo plano, sem mostrar "carregando" e sem
+  /// trocar a tela por erro se falhar. Use quando o catálogo já está na tela
+  /// (ex.: ao sair do admin) — e obrigatoriamente se chamado num dispose,
+  /// onde não se pode notificar a árvore de widgets de forma síncrona.
+  Future<void> carregar({bool silencioso = false}) async {
+    if (!silencioso) {
+      status = StatusCatalogo.carregando;
+      erro = null;
+      notifyListeners();
+    }
     try {
       final resultados = await Future.wait([
         CatalogoService.listarCatalogo(),
@@ -25,6 +31,8 @@ class CatalogoController extends ChangeNotifier {
       status = StatusCatalogo.pronto;
     } catch (e) {
       debugPrint('Erro ao carregar catálogo: $e');
+      // Mantém o catálogo que já está na tela.
+      if (silencioso && status == StatusCatalogo.pronto) return;
       erro = 'Não foi possível carregar o catálogo.\n'
           'Verifique sua conexão e tente novamente.';
       status = StatusCatalogo.erro;

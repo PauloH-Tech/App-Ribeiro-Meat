@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:ribeiro_meat/models/admin.dart';
 import 'package:ribeiro_meat/models/opcao_preparo.dart';
 import 'package:ribeiro_meat/services/api_service.dart';
+import 'package:ribeiro_meat/utils/arquivo_imagem.dart';
 
 /// Chamadas da área administrativa (exigem token).
 class AdminService {
@@ -75,4 +78,18 @@ class AdminService {
 
   static Future<void> excluirProduto(int id) =>
       ApiService.delete('$_produtos/$id');
+
+  // ---------- Imagens ----------
+
+  /// Envia a foto para o S3 (via API) e devolve a URL pública dela.
+  static Future<String> enviarImagem(Uint8List bytes, String tipo) async {
+    final data = await ApiService.enviarArquivo(
+      '/v1/admin/imagens',
+      campo: 'arquivo',
+      bytes: bytes,
+      nomeArquivo: 'foto.${ArquivoImagem.extensao(tipo)}',
+      contentType: tipo,
+    );
+    return (data as Map<String, dynamic>)['url'] as String;
+  }
 }
