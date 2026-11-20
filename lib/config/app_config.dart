@@ -5,7 +5,7 @@ class AppConfig {
   //   'API_URL',
   //   defaultValue: 'https://api.techpaulo.com.br',
   // );
-    static const String apiUrl = String.fromEnvironment(
+  static const String apiUrl = String.fromEnvironment(
     'API_URL',
     defaultValue: 'http://localhost:8080',
   );
