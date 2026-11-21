@@ -7,6 +7,7 @@ import 'package:ribeiro_meat/components/estado_mensagem.dart';
 import 'package:ribeiro_meat/components/produto_card.dart';
 import 'package:ribeiro_meat/config/tema.dart';
 import 'package:ribeiro_meat/models/categoria.dart';
+import 'package:ribeiro_meat/models/configuracao_loja.dart';
 import 'package:ribeiro_meat/pages/carrinho_page.dart';
 import 'package:ribeiro_meat/state/carrinho.dart';
 import 'package:ribeiro_meat/state/catalogo_controller.dart';
@@ -90,9 +91,7 @@ class _HomePageState extends State<HomePage> {
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: lateral),
             sliver: SliverToBoxAdapter(
-              child: _Cabecalho(
-                nomeLoja: catalogo.configuracao?.nomeLoja ?? '',
-              ),
+              child: _Cabecalho(configuracaoLoja: catalogo.configuracao),
             ),
           ),
           SliverPersistentHeader(
@@ -164,8 +163,8 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _Cabecalho extends StatelessWidget {
-  final String nomeLoja;
-  const _Cabecalho({required this.nomeLoja});
+  final ConfiguracaoLoja? configuracaoLoja;
+  const _Cabecalho({required this.configuracaoLoja});
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +193,7 @@ class _Cabecalho extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      nomeLoja,
+                      configuracaoLoja?.nomeLoja ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: tema.titleLarge?.copyWith(
