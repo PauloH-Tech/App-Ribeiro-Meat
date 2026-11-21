@@ -2,11 +2,19 @@ class ConfiguracaoLoja {
   final String nomeLoja;
   final String nomeWhatsapp;
   final String numeroWhatsapp;
+  final String instagram;
+  final String numeroFixo;
+  final String numero;
+  final String endereco;
 
   const ConfiguracaoLoja({
     required this.nomeLoja,
     required this.nomeWhatsapp,
     required this.numeroWhatsapp,
+    required this.instagram,
+    required this.numeroFixo,
+    required this.endereco,
+    required this.numero
   });
 
   factory ConfiguracaoLoja.fromJson(Map<String, dynamic> j) => ConfiguracaoLoja(
@@ -17,5 +25,12 @@ class ConfiguracaoLoja {
       RegExp(r'\D'),
       '',
     ),
+    numeroFixo: ((j['numeroFixo'] as String?) ?? '').replaceAll(
+      RegExp(r'\D'),
+      '',
+    ),
+    instagram: (j['instagram'] as String?) ?? '',
+    endereco: (j['endereco'] as String?) ?? '',
+    numero: (j['numero'] as String?) ?? '',
   );
 }

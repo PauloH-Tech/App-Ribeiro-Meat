@@ -11,6 +11,17 @@ class Formatador {
     return s.replaceAll('.', ',');
   }
 
+  static String formataNumero(String? v) {
+    final d = (v ?? '').replaceAll(RegExp(r'\D'), '');
+    if (d.length == 11) {
+      return '(${d.substring(0, 2)}) ${d.substring(2, 7)}-${d.substring(7)}';
+    }
+    if (d.length == 10) {
+      return '(${d.substring(0, 2)}) ${d.substring(2, 6)}-${d.substring(6)}';
+    }
+    return v ?? '';
+  }
+
   /// Ex.: 0.5 kg -> "500 g", 1.25 kg -> "1,25 kg", 2 peça -> "2 peças".
   static String quantidade(double v, UnitMeasurement unidade) {
     final q = arredondar(v);

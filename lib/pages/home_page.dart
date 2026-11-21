@@ -11,6 +11,7 @@ import 'package:ribeiro_meat/models/configuracao_loja.dart';
 import 'package:ribeiro_meat/pages/carrinho_page.dart';
 import 'package:ribeiro_meat/state/carrinho.dart';
 import 'package:ribeiro_meat/state/catalogo_controller.dart';
+import 'package:ribeiro_meat/utils/formatador.dart';
 import 'package:ribeiro_meat/utils/texto.dart';
 
 const double larguraMaxima = 1120;
@@ -209,7 +210,7 @@ class _Cabecalho extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => _informacoes(context),
+                onPressed: () => _informacoes(context, configuracaoLoja),
                 child: Text('Entre em contato'),
               ),
               const SizedBox(width: 60),
@@ -268,12 +269,11 @@ class _Cabecalho extends StatelessWidget {
     );
   }
 
-  void _informacoes(BuildContext context) {
-    //TODO: trazer dados do backend
-    const String telefone1 = '(44) 99999-9999';
-    const String telefone2 = '(44) 11111-1111';
-    const String instagram = '@ribeirotuiuti';
-    const String endereco = 'Avenida Tuiuti 3620, Maringá-PR';
+  void _informacoes(BuildContext context, ConfiguracaoLoja? config) {
+    String telefone1 = Formatador.formataNumero(config?.numero);
+    String telefone2 = Formatador.formataNumero(config?.numeroFixo);
+    String instagram = config?.instagram ?? '';
+    String endereco = config?.endereco ?? '';
 
     showDialog(
       context: context,
@@ -283,65 +283,73 @@ class _Cabecalho extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min, // Ajusta o tamanho ao conteúdo
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.phone, size: 20, color: Colors.amber),
-                  const SizedBox(width: 8),
-                  const Expanded(child: SelectableText(telefone1)),
-                  IconButton(
-                    icon: const Icon(Icons.copy, size: 20),
-                    tooltip: 'Copiar telefone',
-                    onPressed: () =>
-                        _copiarTexto(context, telefone1, 'Telefone'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.phone, size: 20, color: Colors.amber),
-                  const SizedBox(width: 8),
-                  const Expanded(child: SelectableText(telefone2)),
-                  IconButton(
-                    icon: const Icon(Icons.copy, size: 20),
-                    tooltip: 'Copiar telefone',
-                    onPressed: () =>
-                        _copiarTexto(context, telefone2, 'Telefone'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                children: [
-                  FaIcon(
-                    FontAwesomeIcons.instagram,
-                    size: 20,
-                    color: Colors.amber,
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(child: SelectableText(instagram)),
-                  IconButton(
-                    icon: const Icon(Icons.copy, size: 20),
-                    tooltip: 'Copiar instagram',
-                    onPressed: () =>
-                        _copiarTexto(context, instagram, 'Instagram'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                children: [
-                  FaIcon(FontAwesomeIcons.map, size: 20, color: Colors.amber),
-                  const SizedBox(width: 8),
-                  const Expanded(child: SelectableText(endereco)),
-                  IconButton(
-                    icon: const Icon(Icons.copy, size: 20),
-                    tooltip: 'Copiar endereço',
-                    onPressed: () =>
-                        _copiarTexto(context, endereco, 'Endereço'),
-                  ),
-                ],
-              ),
+              if (telefone1.isNotEmpty) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.phone, size: 20, color: Colors.amber),
+                    const SizedBox(width: 8),
+                    Expanded(child: SelectableText(telefone1)),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 20),
+                      tooltip: 'Copiar telefone',
+                      onPressed: () =>
+                          _copiarTexto(context, telefone1, 'Telefone'),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+              ],
+              if (telefone2.isNotEmpty) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.phone, size: 20, color: Colors.amber),
+                    const SizedBox(width: 8),
+                    Expanded(child: SelectableText(telefone2)),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 20),
+                      tooltip: 'Copiar telefone',
+                      onPressed: () =>
+                          _copiarTexto(context, telefone2, 'Telefone'),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+              ],
+              if (instagram.isNotEmpty) ...[
+                Row(
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.instagram,
+                      size: 20,
+                      color: Colors.amber,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: SelectableText(instagram)),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 20),
+                      tooltip: 'Copiar instagram',
+                      onPressed: () =>
+                          _copiarTexto(context, instagram, 'Instagram'),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+              ],
+              if (endereco.isNotEmpty) ...[
+                Row(
+                  children: [
+                    FaIcon(FontAwesomeIcons.map, size: 20, color: Colors.amber),
+                    const SizedBox(width: 8),
+                    Expanded(child: SelectableText(endereco)),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 20),
+                      tooltip: 'Copiar endereço',
+                      onPressed: () =>
+                          _copiarTexto(context, endereco, 'Endereço'),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
           actions: [

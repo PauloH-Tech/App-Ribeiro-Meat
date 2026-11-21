@@ -33,6 +33,10 @@ void main() {
       nomeLoja: 'Casa de Carnes',
       nomeWhatsapp: 'Vendedor',
       numeroWhatsapp: '5544999999999',
+      numero: '44999597879',
+      numeroFixo: '44999597879',
+      endereco: 'Av. Tuiuti',
+      instagram: '@ribeirotuiuti'
     );
     final msg = PedidoWhatsapp.montarMensagem(
       loja: loja,
@@ -101,6 +105,10 @@ void main() {
       nomeLoja: 'Casa de Carnes',
       nomeWhatsapp: 'Vendedor',
       numeroWhatsapp: '5544999999999',
+      numero: '44999597879',
+      numeroFixo: '44999597879',
+      endereco: 'Av. Tuiuti',
+      instagram: '@ribeirotuiuti'
     );
     final msg = PedidoWhatsapp.montarMensagem(
       loja: loja,
@@ -145,6 +153,10 @@ void main() {
       nomeLoja: 'Casa de Carnes',
       nomeWhatsapp: 'Vendedor',
       numeroWhatsapp: '5544999999999',
+      numero: '44999597879',
+      numeroFixo: '44999597879',
+      endereco: 'Av. Tuiuti',
+      instagram: '@ribeirotuiuti'
     );
     Produto prod(int id, String nome) => Produto(
       id: id,
