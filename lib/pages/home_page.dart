@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:ribeiro_meat/components/barra_carrinho.dart';
 import 'package:ribeiro_meat/components/estado_mensagem.dart';
 import 'package:ribeiro_meat/components/produto_card.dart';
 import 'package:ribeiro_meat/config/tema.dart';
 import 'package:ribeiro_meat/models/categoria.dart';
+import 'package:ribeiro_meat/models/configuracao_loja.dart';
 import 'package:ribeiro_meat/pages/carrinho_page.dart';
 import 'package:ribeiro_meat/state/carrinho.dart';
 import 'package:ribeiro_meat/state/catalogo_controller.dart';
@@ -88,9 +91,7 @@ class _HomePageState extends State<HomePage> {
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: lateral),
             sliver: SliverToBoxAdapter(
-              child: _Cabecalho(
-                nomeLoja: catalogo.configuracao?.nomeLoja ?? '',
-              ),
+              child: _Cabecalho(configuracaoLoja: catalogo.configuracao),
             ),
           ),
           SliverPersistentHeader(
@@ -162,8 +163,8 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _Cabecalho extends StatelessWidget {
-  final String nomeLoja;
-  const _Cabecalho({required this.nomeLoja});
+  final ConfiguracaoLoja? configuracaoLoja;
+  const _Cabecalho({required this.configuracaoLoja});
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +193,7 @@ class _Cabecalho extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      nomeLoja,
+                      configuracaoLoja?.nomeLoja ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: tema.titleLarge?.copyWith(
@@ -207,6 +208,11 @@ class _Cabecalho extends StatelessWidget {
                   ],
                 ),
               ),
+              TextButton(
+                onPressed: () => _informacoes(context),
+                child: Text('Entre em contato'),
+              ),
+              const SizedBox(width: 60),
               IconButton.filledTonal(
                 tooltip: 'Meu pedido',
                 onPressed: () => Navigator.of(
@@ -258,6 +264,106 @@ class _Cabecalho extends StatelessWidget {
           ),
           const SizedBox(height: 8),
         ],
+      ),
+    );
+  }
+
+  void _informacoes(BuildContext context) {
+    //TODO: trazer dados do backend
+    const String telefone1 = '(44) 99999-9999';
+    const String telefone2 = '(44) 11111-1111';
+    const String instagram = '@ribeirotuiuti';
+    const String endereco = 'Avenida Tuiuti 3620, Maringá-PR';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Informações de Contato'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min, // Ajusta o tamanho ao conteúdo
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.phone, size: 20, color: Colors.amber),
+                  const SizedBox(width: 8),
+                  const Expanded(child: SelectableText(telefone1)),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    tooltip: 'Copiar telefone',
+                    onPressed: () =>
+                        _copiarTexto(context, telefone1, 'Telefone'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.phone, size: 20, color: Colors.amber),
+                  const SizedBox(width: 8),
+                  const Expanded(child: SelectableText(telefone2)),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    tooltip: 'Copiar telefone',
+                    onPressed: () =>
+                        _copiarTexto(context, telefone2, 'Telefone'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.instagram,
+                    size: 20,
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(child: SelectableText(instagram)),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    tooltip: 'Copiar instagram',
+                    onPressed: () =>
+                        _copiarTexto(context, instagram, 'Instagram'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  FaIcon(FontAwesomeIcons.map, size: 20, color: Colors.amber),
+                  const SizedBox(width: 8),
+                  const Expanded(child: SelectableText(endereco)),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    tooltip: 'Copiar endereço',
+                    onPressed: () =>
+                        _copiarTexto(context, endereco, 'Endereço'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Fecha o diálogo
+              },
+              child: const Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _copiarTexto(BuildContext context, String texto, String label) {
+    Clipboard.setData(ClipboardData(text: texto));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$label copiado para a área de transferência!'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
