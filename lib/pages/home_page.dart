@@ -177,55 +177,79 @@ class _Cabecalho extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Image.asset(
-                  'assets/icon/icon_logo.png',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      configuracaoLoja?.nomeLoja ?? '',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: tema.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compacto = constraints.maxWidth < 520;
+              final tamanhoLogo = compacto ? 56.0 : 72.0;
+
+              return Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(compacto ? 12 : 16),
+                    child: Image.asset(
+                      'assets/icon/icon_logo.png',
+                      width: tamanhoLogo,
+                      height: tamanhoLogo,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  SizedBox(width: compacto ? 12 : 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          configuracaoLoja?.nomeLoja ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              (compacto ? tema.titleMedium : tema.labelMedium)
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.1,
+                                  ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Catálogo de produtos',
+                          style: tema.bodySmall?.copyWith(
+                            color: Cores.textoSuave,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (compacto)
+                    IconButton.filledTonal(
+                      tooltip: 'Entre em contato',
+                      onPressed: () => _informacoes(context, configuracaoLoja),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded),
+                    )
+                  else
+                    FilledButton.tonalIcon(
+                      label: const Text('Entre em contato'),
+                      onPressed: () => _informacoes(context, configuracaoLoja),
+                      icon: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 18,
                       ),
                     ),
-                    Text(
-                      'Catálogo de produtos',
-                      style: tema.bodySmall?.copyWith(color: Cores.textoSuave),
+                  SizedBox(width: compacto ? 6 : 18),
+                  IconButton.filledTonal(
+                    tooltip: 'Meu pedido',
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CarrinhoPage()),
                     ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () => _informacoes(context, configuracaoLoja),
-                child: Text('Entre em contato'),
-              ),
-              const SizedBox(width: 60),
-              IconButton.filledTonal(
-                tooltip: 'Meu pedido',
-                onPressed: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const CarrinhoPage())),
-                icon: Badge(
-                  isLabelVisible: itens > 0,
-                  label: Text('$itens'),
-                  child: const Icon(Icons.shopping_bag_outlined),
-                ),
-              ),
-            ],
+                    icon: Badge(
+                      isLabelVisible: itens > 0,
+                      label: Text('$itens'),
+                      child: const Icon(Icons.shopping_bag_outlined),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 20),
           Container(
