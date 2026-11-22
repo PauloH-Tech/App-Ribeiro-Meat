@@ -203,7 +203,7 @@ class _Cabecalho extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style:
-                              (compacto ? tema.titleMedium : tema.labelMedium)
+                              (compacto ? tema.titleMedium : tema.titleLarge)
                                   ?.copyWith(
                                     fontWeight: FontWeight.w800,
                                     height: 1.1,
