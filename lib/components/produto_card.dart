@@ -38,7 +38,7 @@ class ProdutoCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  ImagemProduto(produto: produto),
+                  GestureDetector(child: ImagemProduto(produto: produto)),
                   if (noCarrinho > 0)
                     Positioned(
                       top: 10,
@@ -89,15 +89,16 @@ class ProdutoCard extends StatelessWidget {
                               produto.unitMeasurement.rotulo,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: (produto.price == null
-                                  ? tema.labelMedium
-                                  : tema.titleSmall)
-                              ?.copyWith(
-                                color: Cores.vinho,
-                                fontWeight: produto.price == null
-                                    ? FontWeight.w600
-                                    : FontWeight.w800,
-                              ),
+                          style:
+                              (produto.price == null
+                                      ? tema.labelMedium
+                                      : tema.titleSmall)
+                                  ?.copyWith(
+                                    color: Cores.vinho,
+                                    fontWeight: produto.price == null
+                                        ? FontWeight.w600
+                                        : FontWeight.w800,
+                                  ),
                         ),
                       ),
                       Material(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:ribeiro_meat/components/imagem_produto.dart';
 import 'package:ribeiro_meat/components/seletor_quantidade.dart';
+import 'package:ribeiro_meat/components/visualizador_imagem.dart';
 import 'package:ribeiro_meat/config/tema.dart';
 import 'package:ribeiro_meat/models/item_carrinho.dart';
 import 'package:ribeiro_meat/models/opcao_preparo.dart';
@@ -152,7 +153,12 @@ class _AdicionarProdutoSheetState extends State<AdicionarProdutoSheet> {
                     child: SizedBox(
                       height: 170,
                       width: double.infinity,
-                      child: ImagemProduto(produto: p, tamanhoIcone: 64),
+                      child: GestureDetector(
+                        onTap: () => VisualizadorImagem.abrir(context, p),
+                        child: Hero(
+                          tag: VisualizadorImagem.heroTag(p),
+                          child: ImagemProduto(produto: p, tamanhoIcone: 64)),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
